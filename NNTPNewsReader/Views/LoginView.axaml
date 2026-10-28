@@ -1,0 +1,60 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:NNTPNewsReader.ViewModels"
+             mc:Ignorable="d" 
+             d:DesignWidth="800" 
+             d:DesignHeight="450"
+             x:Class="NNTPNewsReader.Views.LoginView"
+             x:DataType="vm:LoginViewModel"
+             Background="BlueViolet">
+    
+    <Grid
+        ColumnDefinitions="Auto"
+        RowDefinitions="Auto, Auto, Auto, Auto, Auto"
+        ColumnSpacing="20"
+        RowSpacing="20"
+        HorizontalAlignment="Center">
+        
+        <Label
+            Grid.Row="0"
+            Content="Login Page"
+            FontSize="40"
+            HorizontalContentAlignment="Center">
+            
+        </Label>
+        
+        <TextBox
+            Grid.Row="1"
+            PlaceholderText="Enter UserName"
+            Text="{Binding Username}">
+            
+        </TextBox>
+        
+        <TextBox
+            Grid.Row="2"
+            PlaceholderText="Enter Password"
+            PasswordChar="*"
+            Text="{Binding Password}">
+            
+        </TextBox>
+        
+        <Button
+            Grid.Row="3"
+            Content="Login"
+            Background="Green"
+            Foreground="Beige"  
+            Command="{Binding CheckLogin}">
+            
+        </Button>
+        
+        <Label
+            Grid.Row="4"
+            Content="{Binding LoginMessage}">
+            
+        </Label>
+        
+    </Grid>
+    
+</UserControl>
