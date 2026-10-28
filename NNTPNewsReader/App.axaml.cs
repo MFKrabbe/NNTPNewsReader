@@ -36,6 +36,12 @@ public partial class App : Application
             {
                 DataContext = vm
             };
+            
+            desktop.Exit += (_, _) =>
+            {
+                var client = services.GetRequiredService<INntpClient>();
+                client.Disconnect();
+            };
         }
         
         base.OnFrameworkInitializationCompleted();

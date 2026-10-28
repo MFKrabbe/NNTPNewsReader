@@ -8,8 +8,8 @@
 
     <ItemGroup>
         <Folder Include="CSS\" />
-        <Folder Include="Models\"/>
         <AvaloniaResource Include="Assets\**"/>
+        <Folder Include="Models\" />
     </ItemGroup>
 
     <ItemGroup>

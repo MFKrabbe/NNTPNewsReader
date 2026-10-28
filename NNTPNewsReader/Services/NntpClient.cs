@@ -10,27 +10,34 @@ public class NntpClient : INntpClient
 {
     private const string CRLF = "\r\n";
     
+    private TcpClient? _client;
+    private  StreamReader? _reader;
+    
+    //Sets up TcpClient and StreamReader and connects to the given host and port
     public async Task<bool> ConnectAsync(string host, int port)
     {
         //const string host = "news.eternal-september.org";
         //const int port = 119;
         
-        using var client =  new TcpClient();
-        await client.ConnectAsync(host, port);
+        _client =  new TcpClient();
+        await _client.ConnectAsync(host, port);
         
-        var ns = client.GetStream();
-        using var reader = new StreamReader(ns);
+        _reader = new StreamReader(_client.GetStream());
         //StreamReader har allerede default som Encoding.UTF-8 og buffersize på 1024, så der er ingen grund til at sætte det som Tommy
         
-        string? greeting = await reader.ReadLineAsync();
+        string? startCode = await _reader.ReadLineAsync();
 
-        return greeting != null && (greeting.StartsWith("200 ") || greeting.StartsWith("201 "));
+        return startCode != null && (startCode.StartsWith("200 ") || startCode.StartsWith("201 "));
         
     }
     
-    public void StopClient()
+    public void Disconnect()
     {
-        throw new System.NotImplementedException();
+        _reader?.Dispose();
+        _client?.Dispose();
+        
+        _reader = null;
+        _client = null;
     }
 
     public void ReadMessages()
