@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
@@ -18,12 +19,20 @@ public class NntpClient : INntpClient
     {
         //const string host = "news.eternal-september.org";
         //const int port = 119;
+
+        try
+        {
+            _client =  new TcpClient();
+            await _client.ConnectAsync(host, port);
         
-        _client =  new TcpClient();
-        await _client.ConnectAsync(host, port);
+            _reader = new StreamReader(_client.GetStream());
+            //StreamReader har allerede default som Encoding.UTF-8 og buffersize på 1024, så der er ingen grund til at sætte det som Tommy
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Error: " + e.Message);
+        }
         
-        _reader = new StreamReader(_client.GetStream());
-        //StreamReader har allerede default som Encoding.UTF-8 og buffersize på 1024, så der er ingen grund til at sætte det som Tommy
         
         string? startCode = await _reader.ReadLineAsync();
 
@@ -55,8 +64,11 @@ public class NntpClient : INntpClient
         throw new System.NotImplementedException();
     }
 
-    public void ListGroups()
+    public async Task<List<string>> ListGroupsAsync()
     {
-        throw new System.NotImplementedException();
+        var command = System.Text.Encoding.UTF8.GetBytes("LIST" + CRLF);
+        await _client!.GetStream().WriteAsync(command); 
+        
+        return new List<string>();
     }
 }

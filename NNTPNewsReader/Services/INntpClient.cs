@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace NNTPNewsReader.Services;
 
@@ -9,5 +10,5 @@ public interface INntpClient
      void ReadMessages();
      void WriteMessages();
      void ListArticles();
-     void ListGroups();
+     Task<List<string>> ListGroupsAsync();
 }

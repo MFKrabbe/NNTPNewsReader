@@ -20,7 +20,7 @@ public class Tests
     
     
     [Test]
-    public async Task Connect_WhenServerAcceptsConnection_ReturnsTrue()
+    public async Task ConnectAsync_WhenServerAcceptsConnection_ReturnsTrue()
     {
         //Arrange:
         var host = "news.eternal-september.org";
@@ -47,11 +47,29 @@ public class Tests
         var port = 119;
         
         //Act
-        bool accepted = await _client.ConnectAsync(host, port) ;
+        bool accepted = await _client.ConnectAsync(host, port);
         
         //Assert
         Assert.That(accepted, Is.True);
         Assert.DoesNotThrow(() => _client.Disconnect());
+    }
+    
+    
+    [Test]
+    public async Task ListGroupsAsync_WhenConnected_ReturnsGroupNames()
+    {
+        //Arrange:
+        var host = "news.eternal-september.org";
+        var port = 119;
+        bool accepted = await _client.ConnectAsync(host, port);
+        
+        //Act
+        var groupNames = await _client.ListGroupsAsync();
+        
+        //Assert
+        Assert.That(accepted, Is.True);
+        Assert.That(groupNames, Is.Not.Empty);
+        
     }
     
 }
