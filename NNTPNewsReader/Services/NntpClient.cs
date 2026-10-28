@@ -19,15 +19,34 @@ public class NntpClient : INntpClient
         //const string host = "news.eternal-september.org";
         //const int port = 119;
         
-        _client =  new TcpClient();
-        await _client.ConnectAsync(host, port);
+        try
+        {
+            _client =  new TcpClient();
+            await _client.ConnectAsync(host, port);
         
-        _reader = new StreamReader(_client.GetStream());
-        //StreamReader har allerede default som Encoding.UTF-8 og buffersize på 1024, så der er ingen grund til at sætte det som Tommy
-        
-        string? startCode = await _reader.ReadLineAsync();
+            _reader = new StreamReader(_client.GetStream());
+            //StreamReader har allerede default som Encoding.UTF-8 og buffersize på 1024, så der er ingen grund til at sætte det som Tommy
+            
+            string? serverGreeting = await _reader.ReadLineAsync();
 
-        return startCode != null && (startCode.StartsWith("200 ") || startCode.StartsWith("201 "));
+            
+            bool isAccepted = serverGreeting != null && (serverGreeting.StartsWith("200 ") || serverGreeting.StartsWith("201 "));
+            
+            if (!isAccepted)
+            {
+                Disconnect();
+                return false;
+            }
+            
+            return true;
+            
+        }
+        catch (Exception e)
+        {
+            Disconnect();
+            Console.WriteLine("Error: " + e.Message);
+            throw;
+        }
         
     }
     
