@@ -34,7 +34,7 @@ public class NntpClient : INntpClient
             
             if (!isAccepted)
             {
-                Disconnect();
+                Disconnect(); //for at server greeting mismatch
                 return false;
             }
             
@@ -43,7 +43,7 @@ public class NntpClient : INntpClient
         }
         catch (Exception e)
         {
-            Disconnect();
+            Disconnect(); //for a failiure in creation of Objects 
             Console.WriteLine("Error: " + e.Message);
             throw;
         }
