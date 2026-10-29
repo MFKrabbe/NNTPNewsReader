@@ -1,4 +1,8 @@
 ﻿
+using System;
+using System.IO;
+using System.Net.Sockets;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
 using NNTPNewsReader.Services;
 
@@ -7,16 +11,19 @@ namespace NNTPNewsReader.ViewModels;
 public partial class LoginViewModel : ViewModelBase
 {
     private readonly NavigationService _navigation;
-    private readonly ILoginService _dbFacade; // skal nok ikke bruge dette og skal gå over NntpServerClienten
     private readonly INntpClient _nntpClient;
 
-    private string _username = "MFKrabbe";
-    private string _password = "wmggezwgn";
+    //husk at ændre password
+    
+    private string _username = "";
+    private string _password = "";
+    private int _port = 119;
+    private string _server = "news.eternal-september.org";
+    
 
-    public LoginViewModel(NavigationService navigation, ILoginService dbFacade, INntpClient nntpClient)
+    public LoginViewModel(NavigationService navigation, INntpClient nntpClient)
     {
         _navigation = navigation;
-        _dbFacade = dbFacade;
         _nntpClient = nntpClient;
     }
 
@@ -40,20 +47,57 @@ public partial class LoginViewModel : ViewModelBase
         set => SetProperty(ref _loginMessage, value);
     }
     
-    
+    //https://learn.microsoft.com/en-us/dotnet/api/system.net.sockets.tcpclient?view=net-10.0
+    //https://learn.microsoft.com/en-us/dotnet/api/system.net.sockets.socketexception?view=net-10.0
     [RelayCommand]
-    public void CheckLogin()
+    public async Task CheckLoginAsync()
     {
-        if (_dbFacade.Login(Username, Password))
+        try
         {
-            _navigation.NavigateTo<NntpMainViewModel>();
-            Username = "";
-            Password = "";
-            LoginMessage = "Logged in";
+            bool hasConnected = await _nntpClient.ConnectAsync(_server, _port);
+            if (!hasConnected)
+            {
+                LoginMessage = "Could not connect to server";
+            }
+
+
+            var result = await _nntpClient.AuthenticateAsync(Username, Password);
+
+            if (result.hasSucceded)
+            {
+                _navigation.NavigateTo<NntpMainViewModel>();
+                Username = "";
+                Password = "";
+                LoginMessage = "";
+            }
+            else
+            {
+                _nntpClient.Disconnect();
+
+                switch (result.responseCode)
+                {
+                    case "481":
+                        LoginMessage = "Wrong Username or Password";
+                        break;
+                    default:
+                        LoginMessage = "Login failed, Please try again";
+                        break;
+                }
+
+            }
         }
-        else
+        catch (SocketException)
         {
-            LoginMessage = "Wrong UserName or Password";
+            //Exception for network error
+            //fx no server on port 455 or a server with that hostname, or when connection is aborted
+            LoginMessage = "Could not connect to server";
         }
+        catch (IOException)
+        {
+            //Exception for NetworkStream read/write error
+            LoginMessage = "Could not connect to server";
+        }
+
+        
     }
 }

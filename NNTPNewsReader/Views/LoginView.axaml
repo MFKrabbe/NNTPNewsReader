@@ -45,7 +45,7 @@
             Content="Login"
             Background="Green"
             Foreground="Beige"  
-            Command="{Binding CheckLogin}">
+            Command="{Binding CheckLoginAsync}">
             
         </Button>
         
