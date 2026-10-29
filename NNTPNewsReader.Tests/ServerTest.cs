@@ -27,10 +27,10 @@ public class Tests
         var port = 119;
         
         //Act:
-        bool accepted = await _client.ConnectAsync(host, port);
+        bool isAccepted = await _client.ConnectAsync(host, port);
         
         //Assert
-        Assert.That(accepted, Is.True);
+        Assert.That(isAccepted, Is.True);
     }
     
     [Test]
@@ -47,10 +47,10 @@ public class Tests
         var port = 119;
         
         //Act
-        bool accepted = await _client.ConnectAsync(host, port) ;
+        bool isAccepted = await _client.ConnectAsync(host, port) ;
         
         //Assert
-        Assert.That(accepted, Is.True);
+        Assert.That(isAccepted, Is.True);
         Assert.DoesNotThrow(() => _client.Disconnect());
     }
     
@@ -65,16 +65,16 @@ public class Tests
         string? username = Environment.GetEnvironmentVariable("USERNAME");
         string? password = Environment.GetEnvironmentVariable("PASSWORD");
             
-        bool accepted = await _client.ConnectAsync(host, port);
-        Assert.That(accepted, Is.True);
+        bool isAccepted = await _client.ConnectAsync(host, port);
+        Assert.That(isAccepted, Is.True);
         
         
         //Act
-        var result = await _client.AuthenticateAsync(username!, password!);
+        var login = await _client.AuthenticateAsync(username!, password!);
        
         //Assert
-        Assert.That(result.hasSucceded, Is.True);
-        Assert.That(result.responseCode, Is.EqualTo("281"));
+        Assert.That(login.hasSucceded, Is.True);
+        Assert.That(login.responseCode, Is.EqualTo("281"));
        
     }
     
@@ -90,23 +90,21 @@ public class Tests
         string? username = Environment.GetEnvironmentVariable("USERNAME");
         string password = "tester man";
             
-        bool accepted = await _client.ConnectAsync(host, port);
-        Assert.That(accepted, Is.True);
+        bool isAccepted = await _client.ConnectAsync(host, port);
+        Assert.That(isAccepted, Is.True);
         
         
         //Act
-        var result = await _client.AuthenticateAsync(username!, password!);
+        var login = await _client.AuthenticateAsync(username!, password!);
         
         //Assert
-        Assert.That(result.hasSucceded, Is.False);
-        Assert.That(result.responseCode, Is.EqualTo("481"));
+        Assert.That(login.hasSucceded, Is.False);
+        Assert.That(login.responseCode, Is.EqualTo("481"));
     }
     
     [Test]
     public async Task AuthenticateAsync_WithInvalidUser_ReturnsFalse()
     {
-        //Im n
-        
         //Arrange:
         var host = "news.eternal-september.org";
         var port = 119;
@@ -114,16 +112,42 @@ public class Tests
         string username = "Bobby";
         string password = "tester man";
             
-        bool accepted = await _client.ConnectAsync(host, port);
-        Assert.That(accepted, Is.True);
+        bool isAccepted = await _client.ConnectAsync(host, port);
+        Assert.That(isAccepted, Is.True);
         
         
         //Act
-        var result = await _client.AuthenticateAsync(username!, password!);
+        var login = await _client.AuthenticateAsync(username!, password!);
         
         //Assert
-        Assert.That(result.hasSucceded, Is.False);
-        Assert.That(result.responseCode, Is.EqualTo("481"));
+        Assert.That(login.hasSucceded, Is.False);
+        Assert.That(login.responseCode, Is.EqualTo("481"));
     }
-    
+
+    [Test]
+    public async Task ListGroupsAsync_WhenAuthenticated_ReturnsList()
+    {
+        // Arrange
+        string? username = Environment.GetEnvironmentVariable("USERNAME");
+        string? password = Environment.GetEnvironmentVariable("PASSWORD");
+
+        Assert.That(username, Is.Not.Null.And.Not.Empty);
+        Assert.That(password, Is.Not.Null.And.Not.Empty);
+
+        var host = "news.eternal-september.org";
+        var port = 119;
+
+        bool isConnected = await _client.ConnectAsync(host, port);
+        Assert.That(isConnected, Is.True);
+
+        var login = await _client.AuthenticateAsync(username!, password!);
+        Assert.That(login.hasSucceded, Is.True);
+
+        // Act
+        var group = await _client.ListGroupsAsync();
+
+        // Assert
+        Assert.That(group.Contains("free.chicken"),Is.True);
+    }
+
 }

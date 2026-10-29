@@ -1,10 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace NNTPNewsReader.Services;
+
+
+
+//https://www.w3.org/Protocols/rfc977/rfc977 for return codes
+
 
 public class NntpClient : INntpClient
 {
@@ -25,7 +31,6 @@ public class NntpClient : INntpClient
             await _client.ConnectAsync(host, port);
         
             _reader = new StreamReader(_client.GetStream());
-            //StreamReader har allerede default som Encoding.UTF-8 og buffersize på 1024, så der er ingen grund til at sætte det som Tommy
             
             string? serverGreeting = await _reader.ReadLineAsync();
 
@@ -76,13 +81,42 @@ public class NntpClient : INntpClient
 
     public async Task<List<string>> ListGroupsAsync()
     {
-        var command = System.Text.Encoding.UTF8.GetBytes("LIST" + CRLF);
+        var command = Encoding.UTF8.GetBytes("list" + CRLF);
         await _client!.GetStream().WriteAsync(command); 
         
-        return new List<string>();
+        string? serverResponse = await _reader!.ReadLineAsync();
+        
+        var newsgroups = new List<string>();
+
+        if (serverResponse != null && serverResponse.StartsWith("215 "))
+        {
+            while (true)
+            {
+                string? groupName = await _reader!.ReadLineAsync();
+
+                if (groupName == null)
+                {
+                    Console.WriteLine("groupnames is null");
+                    break;
+                }
+
+                if (groupName == ".")
+                {
+                    break;
+                }
+                
+                //gets the groupname only from the return of fx free.chicken 000000029 000000001
+                //                                                   0           1         2
+                newsgroups.Add(groupName.Split(" ")[0]);
+            }
+        }
+
+        return newsgroups;
     }
 
-    //https://www.rfc-editor.org/rfc/rfc4643.html
+    
+    
+    
     //https://learn.microsoft.com/en-us/dotnet/api/system.string.split?view=net-10.0
     //https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/value-tuples
     //https://learn.microsoft.com/en-us/dotnet/api/system.net.sockets.tcpclient?view=net-10.0
@@ -91,7 +125,7 @@ public class NntpClient : INntpClient
         try
         {
 
-            var command = System.Text.Encoding.UTF8.GetBytes($"authinfo user {username}{CRLF}");
+            var command = Encoding.UTF8.GetBytes($"authinfo user {username}{CRLF}");
 
             await _client!.GetStream().WriteAsync(command);
             string? serverResponse = await _reader!.ReadLineAsync();
@@ -108,7 +142,7 @@ public class NntpClient : INntpClient
                 return (false, serverResponse?.Split(' ')[0]);
             }
 
-            command = System.Text.Encoding.UTF8.GetBytes($"authinfo pass {password}{CRLF}");
+            command = Encoding.UTF8.GetBytes($"authinfo pass {password}{CRLF}");
 
             await _client!.GetStream().WriteAsync(command);
             serverResponse = await _reader!.ReadLineAsync();

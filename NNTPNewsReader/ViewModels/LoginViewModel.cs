@@ -15,8 +15,8 @@ public partial class LoginViewModel : ViewModelBase
 
     //husk at ændre password
     
-    private string _username = "";
-    private string _password = "";
+    private string _username = "MFKrabbe";
+    private string _password = "wmggezwgn";
     private int _port = 119;
     private string _server = "news.eternal-september.org";
     
@@ -86,18 +86,10 @@ public partial class LoginViewModel : ViewModelBase
 
             }
         }
-        catch (SocketException)
+        catch (Exception)
         {
-            //Exception for network error
-            //fx no server on port 455 or a server with that hostname, or when connection is aborted
-            LoginMessage = "Could not connect to server";
+            LoginMessage = "Something went wrong, try again";
         }
-        catch (IOException)
-        {
-            //Exception for NetworkStream read/write error
-            LoginMessage = "Could not connect to server";
-        }
-
         
     }
 }

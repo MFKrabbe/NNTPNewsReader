@@ -10,11 +10,18 @@
              x:DataType="vm:NntpMainViewModel">
     
     
-    <Grid>
+    <Grid
+        ColumnDefinitions="Auto, *">
         <Button 
+            
             Content="Test Server"
             Command="{Binding testConnection}">
-            
         </Button>
+        
+        <ListBox
+            Grid.Column="1"
+            ItemsSource="{Binding Test}">
+        </ListBox>
+        
     </Grid> 
 </UserControl>
