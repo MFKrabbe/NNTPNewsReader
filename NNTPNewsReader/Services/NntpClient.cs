@@ -114,9 +114,12 @@ public class NntpClient : INntpClient
         return newsgroups;
     }
 
-    
-    
-    
+    public Task<(bool hasSucceeded, string? responseCode)> SelectGroupAsync(string groupName)
+    {
+        throw new NotImplementedException();
+    }
+
+
     //https://learn.microsoft.com/en-us/dotnet/api/system.string.split?view=net-10.0
     //https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/value-tuples
     //https://learn.microsoft.com/en-us/dotnet/api/system.net.sockets.tcpclient?view=net-10.0

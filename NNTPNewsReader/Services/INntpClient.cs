@@ -12,4 +12,5 @@ public interface INntpClient
      void ListArticles();
      Task<(bool hasSucceded, string? responseCode)> AuthenticateAsync(string username, string password);
      Task<List<string>> ListGroupsAsync();
+     Task<(bool hasSucceeded, string? responseCode)> SelectGroupAsync(string groupName);
 }
