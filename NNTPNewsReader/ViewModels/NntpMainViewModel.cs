@@ -17,26 +17,27 @@ public partial class NntpMainViewModel : ViewModelBase
         _nntpClient = nntpClient;
     }
 
-    private ObservableCollection<string> _test;
+    private ObservableCollection<string> _newsGroups = new();
 
-    public ObservableCollection<string> Test
+    public ObservableCollection<string> NewsGroups
     {
-        get => _test;
-        set => SetProperty(ref _test, value);
+        get => _newsGroups;
+        set => SetProperty(ref _newsGroups, value);
     }
     
-    
-    public List<string> _groups;
+    public async Task LoadGroupsAsync()
+    {
+        var groupsNames = await _nntpClient.ListGroupsAsync();
+        
+        NewsGroups = new ObservableCollection<string>(groupsNames);
+        
+    }
 
     [RelayCommand]
-    public async Task testConnection()
+    public void Disconnect()
     {
-        _groups =  await _nntpClient.ListGroupsAsync();
-        
-        Test = new ObservableCollection<string>(_groups);
-        
-
-
-        //_nntpClient.Connect(null, 0);
+        _nntpClient.Disconnect();
+        NewsGroups.Clear();
+        _navigation.NavigateTo<LoginViewModel>();
     }
 }

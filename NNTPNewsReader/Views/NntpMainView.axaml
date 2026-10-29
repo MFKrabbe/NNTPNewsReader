@@ -7,21 +7,98 @@
              d:DesignWidth="800" 
              d:DesignHeight="450"
              x:Class="NNTPNewsReader.Views.NntpMainView"
-             x:DataType="vm:NntpMainViewModel">
+             x:DataType="vm:NntpMainViewModel"
+             Background="DarkMagenta">
     
     
     <Grid
-        ColumnDefinitions="Auto, *">
-        <Button 
+        RowDefinitions="30,*">
+    
+        <Button
+            Grid.Row = "0" 
+            Content="Disconnect"
+            Command="{Binding Disconnect}">
             
-            Content="Test Server"
-            Command="{Binding testConnection}">
         </Button>
         
-        <ListBox
-            Grid.Column="1"
-            ItemsSource="{Binding Test}">
-        </ListBox>
+        <Grid 
+            Grid.Row = "1"
+            ColumnDefinitions="250,*"
+            RowDefinitions="*,*"
+            ShowGridLines="True"
+            Margin="10"
+            ColumnSpacing="10"
+            RowSpacing="5"
+            >
+
+        <!--NewsGroups, Remenber to make the ListBox Background="Transparent"  -->
+            <Grid
+                RowDefinitions="Auto, *"
+                Grid.RowSpan="2">
+            
+                <TextBlock 
+                    Grid.Column="0"
+                    Grid.Row="0"
+                    Text="NewsGroups">
+            
+                </TextBlock>
+            
+                <ListBox 
+                    Grid.Column="0"
+                    Grid.Row="1"
+                    Background="Red" 
+                    ItemsSource="{Binding NewsGroups}">
+            
+                </ListBox >
+            
+            </Grid>
         
-    </Grid> 
+
+            <Grid
+                Grid.Row = "0"
+                Grid.Column="1"
+                RowDefinitions="Auto, *">
+            
+                <TextBlock 
+                    Grid.Column="0"
+                    Grid.Row="0"
+                    Text="Articles">
+            
+                </TextBlock>
+            
+                <ListBox 
+                    Grid.Column="0"
+                    Grid.Row="1"
+                    Background="blue"
+                    ItemsSource="{Binding }">
+                
+                </ListBox >
+            
+            </Grid>
+        
+            <Grid
+                Grid.Row = "1"
+                Grid.Column="1"
+                RowDefinitions="Auto, *">
+                
+                <TextBlock 
+                    Grid.Column="0"
+                    Grid.Row="0"
+                    Text="Content">
+                
+                </TextBlock>
+                
+                <ListBox 
+                    Grid.Column="0"
+                    Grid.Row="1"
+                    Background="GreenYellow"
+                    ItemsSource="{Binding }">
+                
+                </ListBox >
+                
+            </Grid>
+        
+        </Grid>
+    </Grid>
+    
 </UserControl>
