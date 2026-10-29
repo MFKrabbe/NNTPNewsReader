@@ -10,4 +10,5 @@ public interface INntpClient
      void WriteMessages();
      void ListArticles();
      void ListGroups();
+     Task<(bool hasSucceded, string? responseCode)> AuthenticateAsync(string username, string password);
 }

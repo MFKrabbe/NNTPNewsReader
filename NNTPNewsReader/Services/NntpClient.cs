@@ -78,4 +78,38 @@ public class NntpClient : INntpClient
     {
         throw new System.NotImplementedException();
     }
+
+    //https://www.rfc-editor.org/rfc/rfc4643.html
+    //https://learn.microsoft.com/en-us/dotnet/api/system.string.split?view=net-10.0
+    //https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/value-tuples
+    public async Task<(bool hasSucceded, string? responseCode)> AuthenticateAsync(string username, string password)
+    {
+        var command = System.Text.Encoding.UTF8.GetBytes($"authinfo user {username}{CRLF}");
+        
+        await _client!.GetStream().WriteAsync(command);
+        string? serverResponse = await _reader!.ReadLineAsync();
+
+        if (serverResponse != null && serverResponse.StartsWith("281"))
+        {
+            //if a server only requires username
+            return (true, "281"); 
+        }
+
+        if (serverResponse == null || !serverResponse.StartsWith("381"))
+        {
+            //catches everything this not the 381 request password code (481, 482 or 500 what?) or no response
+            return (false, serverResponse?.Split(' ')[0]);
+        } 
+        
+        command = System.Text.Encoding.UTF8.GetBytes($"authinfo pass {password}{CRLF}");
+        
+        await _client!.GetStream().WriteAsync(command);
+        serverResponse = await _reader!.ReadLineAsync();
+        
+        bool succeded = serverResponse != null && serverResponse.StartsWith("281");
+        string? responseCode = serverResponse?.Split(" ")[0];
+        
+        
+        return (succeded, responseCode);
+    }
 }
