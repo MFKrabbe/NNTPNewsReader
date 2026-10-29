@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
@@ -19,7 +18,7 @@ public class NntpClient : INntpClient
     {
         //const string host = "news.eternal-september.org";
         //const int port = 119;
-
+        
         try
         {
             _client =  new TcpClient();
@@ -27,16 +26,27 @@ public class NntpClient : INntpClient
         
             _reader = new StreamReader(_client.GetStream());
             //StreamReader har allerede default som Encoding.UTF-8 og buffersize på 1024, så der er ingen grund til at sætte det som Tommy
+            
+            string? serverGreeting = await _reader.ReadLineAsync();
+
+            
+            bool isAccepted = serverGreeting != null && (serverGreeting.StartsWith("200 ") || serverGreeting.StartsWith("201 "));
+            
+            if (!isAccepted)
+            {
+                Disconnect(); //for at server greeting mismatch
+                return false;
+            }
+            
+            return true;
+            
         }
         catch (Exception e)
         {
-            Console.WriteLine("Error: " + e.Message);
+            Disconnect(); //for a failiure in creation of Objects or connection
+            Console.WriteLine(e);
+            throw;
         }
-        
-        
-        string? startCode = await _reader.ReadLineAsync();
-
-        return startCode != null && (startCode.StartsWith("200 ") || startCode.StartsWith("201 "));
         
     }
     
@@ -70,5 +80,50 @@ public class NntpClient : INntpClient
         await _client!.GetStream().WriteAsync(command); 
         
         return new List<string>();
+    }
+
+    //https://www.rfc-editor.org/rfc/rfc4643.html
+    //https://learn.microsoft.com/en-us/dotnet/api/system.string.split?view=net-10.0
+    //https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/value-tuples
+    //https://learn.microsoft.com/en-us/dotnet/api/system.net.sockets.tcpclient?view=net-10.0
+    public async Task<(bool hasSucceded, string? responseCode)> AuthenticateAsync(string username, string password)
+    {
+        try
+        {
+
+            var command = System.Text.Encoding.UTF8.GetBytes($"authinfo user {username}{CRLF}");
+
+            await _client!.GetStream().WriteAsync(command);
+            string? serverResponse = await _reader!.ReadLineAsync();
+
+            if (serverResponse != null && serverResponse.StartsWith("281"))
+            {
+                //if a server only requires username
+                return (true, "281");
+            }
+
+            if (serverResponse == null || !serverResponse.StartsWith("381"))
+            {
+                //catches everything this not the 381 request password code (481, 482 or 500 what?) or no response
+                return (false, serverResponse?.Split(' ')[0]);
+            }
+
+            command = System.Text.Encoding.UTF8.GetBytes($"authinfo pass {password}{CRLF}");
+
+            await _client!.GetStream().WriteAsync(command);
+            serverResponse = await _reader!.ReadLineAsync();
+
+            bool succeded = serverResponse != null && serverResponse.StartsWith("281");
+            string? responseCode = serverResponse?.Split(" ")[0];
+
+
+            return (succeded, responseCode);
+        }
+        catch(Exception e)
+        {
+            Disconnect();
+            Console.WriteLine(e);
+            throw;
+        }
     }
 }

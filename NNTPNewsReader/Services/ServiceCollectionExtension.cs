@@ -19,6 +19,5 @@ public static class ServiceCollectionExtension
         collection.AddSingleton<NavigationService>();
         
         collection.AddSingleton<INntpClient, NntpClient>();
-        collection.AddSingleton<ILoginService, LoginService>();
     }   
 }
