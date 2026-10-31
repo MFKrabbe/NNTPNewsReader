@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using NNTPNewsReader.Models;
 
 namespace NNTPNewsReader.Services;
 
@@ -9,8 +11,8 @@ public interface INntpClient
      void Disconnect();
      void ReadMessages();
      void WriteMessages();
-     void ListArticles();
-     Task<(bool hasSucceded, string? responseCode)> AuthenticateAsync(string username, string password);
-     Task<List<string>> ListGroupsAsync();
-     Task<(bool hasSucceeded, string? responseCode)> SelectGroupAsync(string groupName);
+     Task<(bool hasSucceeded, List<ArticleEntry> articleEntries)> ListArticlesAsync(GroupDetails groupDetails);
+     Task<bool> AuthenticateAsync(string username, string password);
+     Task<(bool hasSucceeded, List<NewsGroupEntry> newsGroupEntries)> ListNewsGroupsAsync();
+     Task<(bool hasSucceeded, GroupDetails? details)> SelectNewsGroupAsync(string newsGroupEntryName);
 }

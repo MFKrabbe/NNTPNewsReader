@@ -4,12 +4,26 @@ using System.IO;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+using NNTPNewsReader.Models;
 
 namespace NNTPNewsReader.Services;
 
 
+/*
+ *8.3.3.  Examples
+ *
+ * In the first four examples, TAB has been replaced by vertical bar and
+ * some lines have been folded for readability.
+ *
+ * 3000234|I am just a test article|"Demo User"
+ * <nobody@example.com>|6 Oct 1998 04:38:40 -0500|
+ * <45223423@example.com>|<45454@example.net>|1234|
+ * 17|Xref: news.example.com misc.test:3000363
+ */
+
 
 //https://www.w3.org/Protocols/rfc977/rfc977 for return codes
+//https://www.rfc-editor.org/info/rfc6048/#section-3.1 newer codes --> check Posting status
 
 
 public class NntpClient : INntpClient
@@ -28,6 +42,7 @@ public class NntpClient : INntpClient
         try
         {
             _client =  new TcpClient();
+            
             await _client.ConnectAsync(host, port);
         
             _reader = new StreamReader(_client.GetStream());
@@ -74,60 +89,226 @@ public class NntpClient : INntpClient
         throw new System.NotImplementedException();
     }
 
-    public void ListArticles()
+    //https://www.rfc-editor.org/info/rfc3977/#section-8.3 
+    public async Task<(bool hasSucceeded, List<ArticleEntry> articleEntries)> ListArticlesAsync(GroupDetails groupDetails)
     {
-        throw new System.NotImplementedException();
-    }
-
-    public async Task<List<string>> ListGroupsAsync()
-    {
-        var command = Encoding.UTF8.GetBytes("list" + CRLF);
-        await _client!.GetStream().WriteAsync(command); 
-        
-        string? serverResponse = await _reader!.ReadLineAsync();
-        
-        var newsgroups = new List<string>();
-
-        if (serverResponse != null && serverResponse.StartsWith("215 "))
+        try
         {
-            while (true)
+            int estimatedArticles = groupDetails.EstimatedArticles;
+            int firstArticle = groupDetails.FirstArticle;
+            int lastArticle = groupDetails.LastArticle;
+
+            var articleList = new List<ArticleEntry>();
+            
+            if (estimatedArticles == 0 || lastArticle < firstArticle)
             {
-                string? groupName = await _reader!.ReadLineAsync();
-
-                if (groupName == null)
+                Console.WriteLine("no articles");
+                return (true, articleList);
+            }
+            
+            var command = Encoding.UTF8.GetBytes($"over {firstArticle}-{lastArticle}{CRLF}");
+            await _client!.GetStream().WriteAsync(command);
+            Console.WriteLine($"Sending OVER {firstArticle}-{lastArticle}");
+        
+            string? serverResponse = await _reader!.ReadLineAsync();
+            Console.WriteLine($"OVER response: {serverResponse}");
+            
+            if (serverResponse != null && serverResponse.StartsWith("224 "))
+            {
+                while (true)
                 {
-                    Console.WriteLine("groupnames is null");
-                    break;
+                    string? articleString = await _reader!.ReadLineAsync();
+                    
+                    if (articleString == null)
+                    {
+                        throw new Exception("ArticleString is null");
+                    }
+
+                    if (articleString == ".")
+                    {
+                        break;
+                    }
+                    
+                    var articleStringParts = articleString.Split('\t');
+                    
+                    if (articleStringParts.Length < 4)
+                    {
+                        Console.WriteLine(articleStringParts);
+                        throw new Exception("Invalid group string");
+                    }
+
+                    var articleNumber = int.Parse(articleStringParts[0]);
+                    var articleSubject = articleStringParts[1];
+                    var articleAuther = articleStringParts[2];
+                    var articleDate = articleStringParts[3];
+
+                    var articleEntry = new ArticleEntry
+                    {
+                        ArticleNumber =  articleNumber,
+                        ArticleSubject = articleSubject,
+                        ArticleAuthor = articleAuther,
+                        ArticleDate = articleDate
+                    };
+
+                    Console.WriteLine(articleEntry.ArticleSubject);
+                    articleList.Add(articleEntry);
                 }
+                Console.WriteLine("OVER response fully read");
+            }
+            else
+            {
+                Console.WriteLine("no articles in range or null");
+                return (false, articleList);
+            }
+            return (true, articleList);
+        }
+        catch (Exception e)
+        {
+            Disconnect();
+            Console.WriteLine(e);
+            throw;
+        }
+    }
+    
+    public async Task<(bool hasSucceeded, List<NewsGroupEntry> newsGroupEntries)> ListNewsGroupsAsync()
+    {
+        try
+        {
+            var command = Encoding.UTF8.GetBytes($"list{CRLF}");
+            await _client!.GetStream().WriteAsync(command); 
+        
+            string? serverResponse = await _reader!.ReadLineAsync();
+        
+            var newsgroups = new List<NewsGroupEntry>();
 
-                if (groupName == ".")
+            if (serverResponse != null && serverResponse.StartsWith("215 "))
+            {
+                while (true)
                 {
-                    break;
+                    string? groupString = await _reader!.ReadLineAsync();
+
+                    if (groupString == null)
+                    {
+                        Console.WriteLine("groupString is null");
+                        throw new Exception("GroupString is null");
+                    }
+
+                    if (groupString == ".")
+                    {
+                        break;
+                    }
+                
+                    //split the return msg  fx free.chicken 000000029 000000001 y
+                    //                              0           1         2     3
+                    var stringParts = groupString.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (stringParts.Length != 4)
+                    {
+                        Console.WriteLine(stringParts);
+                        throw new Exception("Invalid group string");
+                    }
+                
+                    var name = stringParts[0];
+                    var lastArticle = int.Parse(stringParts[1]);
+                    var firstArticle =int.Parse(stringParts[2]);
+                    var status = stringParts[3];
+
+                    var newsGroup = new NewsGroupEntry
+                    {
+                        GroupName =  name,
+                        LastArticle = lastArticle,
+                        FirstArticle = firstArticle,
+                        Status = status
+                    };
+                
+                    newsgroups.Add(newsGroup);
+                }
+            }
+            else
+            {
+                return  (false, newsgroups);
+            }
+
+            return (true, newsgroups);
+        }
+        catch (Exception e)
+        {
+            Disconnect();
+            Console.WriteLine(e);
+            throw;
+        }
+        
+        
+    }
+    
+    
+    //GroupDetails? because selection can potentially fail with 411 and return no GroupDetails
+    //Group can be removed after List was run
+    
+    public async Task<(bool hasSucceeded, GroupDetails? details)> SelectNewsGroupAsync(string newsGroupEntryName)
+    {
+        try
+        {
+            var command = Encoding.UTF8.GetBytes($"group {newsGroupEntryName}{CRLF}");
+            Console.WriteLine($"Sending GROUP: {newsGroupEntryName}");
+            
+            await _client!.GetStream().WriteAsync(command);
+            Console.WriteLine("GROUP sent; waiting for response");
+            
+            string? serverResponse = await _reader!.ReadLineAsync();
+            Console.WriteLine($"GROUP response: {serverResponse}");
+
+            if (serverResponse != null && serverResponse.StartsWith("211 "))
+            {
+                var articleSummaryParts = serverResponse.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                
+                
+                //211 n f l s group selected
+                // 0  1 2 3 4  5        6
+                
+                if (articleSummaryParts.Length < 5)
+                {
+                    Console.WriteLine(articleSummaryParts);
+                    throw new Exception("Invalid group string");
                 }
                 
-                //gets the groupname only from the return of fx free.chicken 000000029 000000001
-                //                                                   0           1         2
-                newsgroups.Add(groupName.Split(" ")[0]);
+                var estimatedArticles = int.Parse(articleSummaryParts[1]); //n
+                var firstArticle = int.Parse(articleSummaryParts[2]); //f
+                var lastArticle = int.Parse(articleSummaryParts[3]); //l
+                var groupName = articleSummaryParts[4]; //s
+
+                var groupDetails = new GroupDetails
+                {
+                    FirstArticle = firstArticle,
+                    LastArticle = lastArticle,
+                    GroupName = groupName,
+                    EstimatedArticles = estimatedArticles
+                };
+                
+                return (true, groupDetails);
             }
+            else
+            {
+                return (false, null);
+            }
+            
         }
-
-        return newsgroups;
-    }
-
-    public Task<(bool hasSucceeded, string? responseCode)> SelectGroupAsync(string groupName)
-    {
-        throw new NotImplementedException();
+        catch (Exception e)
+        {
+            Disconnect();
+            Console.WriteLine(e);
+            throw;
+        }
     }
 
 
     //https://learn.microsoft.com/en-us/dotnet/api/system.string.split?view=net-10.0
     //https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/value-tuples
     //https://learn.microsoft.com/en-us/dotnet/api/system.net.sockets.tcpclient?view=net-10.0
-    public async Task<(bool hasSucceded, string? responseCode)> AuthenticateAsync(string username, string password)
+    public async Task<bool> AuthenticateAsync(string username, string password)
     {
         try
         {
-
             var command = Encoding.UTF8.GetBytes($"authinfo user {username}{CRLF}");
 
             await _client!.GetStream().WriteAsync(command);
@@ -136,25 +317,21 @@ public class NntpClient : INntpClient
             if (serverResponse != null && serverResponse.StartsWith("281"))
             {
                 //if a server only requires username
-                return (true, "281");
+                return true;
             }
 
             if (serverResponse == null || !serverResponse.StartsWith("381"))
             {
                 //catches everything this not the 381 request password code (481, 482 or 500 what?) or no response
-                return (false, serverResponse?.Split(' ')[0]);
+                return false;
             }
 
             command = Encoding.UTF8.GetBytes($"authinfo pass {password}{CRLF}");
 
             await _client!.GetStream().WriteAsync(command);
             serverResponse = await _reader!.ReadLineAsync();
-
-            bool succeded = serverResponse != null && serverResponse.StartsWith("281");
-            string? responseCode = serverResponse?.Split(" ")[0];
-
-
-            return (succeded, responseCode);
+            
+            return serverResponse != null && serverResponse.StartsWith("281");
         }
         catch(Exception e)
         {

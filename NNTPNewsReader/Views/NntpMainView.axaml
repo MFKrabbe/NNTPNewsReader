@@ -3,102 +3,161 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:NNTPNewsReader.ViewModels"
-             mc:Ignorable="d" 
-             d:DesignWidth="800" 
+             xmlns:models="clr-namespace:NNTPNewsReader.Models"
+             mc:Ignorable="d"
+             d:DesignWidth="800"
              d:DesignHeight="450"
              x:Class="NNTPNewsReader.Views.NntpMainView"
              x:DataType="vm:NntpMainViewModel"
              Background="DarkMagenta">
-    
-    
+
+
     <Grid
-        RowDefinitions="30,*">
-    
-        <Button
-            Grid.Row = "0" 
-            Content="Disconnect"
-            Command="{Binding Disconnect}">
-            
-        </Button>
-        
-        <Grid 
-            Grid.Row = "1"
-            ColumnDefinitions="250,*"
+        RowDefinitions="30,*"
+        Margin="10">
+
+        <Grid
+            Grid.Row="0"
+            ColumnDefinitions="0.5*,*"
+            Background="Chartreuse">
+
+            <Button
+                Grid.Column="0"
+                Content="Disconnect"
+                Command="{Binding DisconnectCommand}">
+            </Button>
+
+            <TextBlock
+                Grid.Column="1"
+                Text="{Binding ErrorMessage}">
+            </TextBlock>
+
+
+        </Grid>
+
+
+        <Grid
+            Grid.Row="1"
+            ColumnDefinitions="0.5*,*"
             RowDefinitions="*,*"
             ShowGridLines="True"
-            Margin="10"
             ColumnSpacing="10"
-            RowSpacing="5"
-            >
+            RowSpacing="5">
 
-        <!--NewsGroups, Remenber to make the ListBox Background="Transparent"  -->
-            <Grid
-                RowDefinitions="Auto, *"
-                Grid.RowSpan="2">
-            
-                <TextBlock 
-                    Grid.Column="0"
-                    Grid.Row="0"
-                    Text="NewsGroups">
-            
-                </TextBlock>
-            
-                <ListBox 
-                    Grid.Column="0"
-                    Grid.Row="1"
-                    Background="Red" 
-                    ItemsSource="{Binding NewsGroups}">
-            
-                </ListBox >
-            
-            </Grid>
-        
+            <!--NewsGroups, Remenber to make the ListBox Background="Transparent"  -->
+            <Border
+                Grid.Row="0"
+                Grid.Column="0"
+                Grid.RowSpan="2"
+                Background="Red"
+                Padding="10"
+                CornerRadius="10">
+
+                <Grid
+                    RowDefinitions="Auto, *">
+
+                    <TextBlock
+                        Grid.Column="0"
+                        Grid.Row="0"
+                        Text="NewsGroups">
+
+                    </TextBlock>
+
+
+                    <TableView 
+                        Grid.Row="1"
+                        ItemsSource="{Binding NewsGroups}"
+                        SelectionMode="Single"
+                        SelectedItem="{Binding SelectedNewsGroup, Mode=TwoWay}"
+                        CornerRadius="5"
+                        IsEnabled="{Binding !LoadArticlesCommand.IsRunning}"
+                        ScrollViewer.VerticalScrollBarVisibility="Auto"
+                        >
+
+                        <TableView.Columns>
+                            <TableViewColumn Header="Name"
+                                             Binding="{Binding GroupName}"
+                                             Width="2*" />
+
+                            <TableViewColumn Header="Articles"
+                                             Binding="{Binding EstimatedArticles}"
+                                             Width="*"
+                                             HorizontalContentAlignment="Right" />
+
+                            <TableViewColumn Header="CanPost"
+                                             Binding="{Binding Status}"
+                                             Width="*"
+                                             HorizontalContentAlignment="Right" />
+                        </TableView.Columns>
+                    </TableView>
+
+                </Grid>
+
+            </Border>
+
 
             <Grid
-                Grid.Row = "0"
+                Grid.Row="0"
                 Grid.Column="1"
-                RowDefinitions="Auto, *">
-            
-                <TextBlock 
+                RowDefinitions="Auto, *"
+                Background="blue">
+
+                <TextBlock
                     Grid.Column="0"
                     Grid.Row="0"
                     Text="Articles">
-            
+
                 </TextBlock>
-            
-                <ListBox 
-                    Grid.Column="0"
+
+                <TableView 
                     Grid.Row="1"
-                    Background="blue"
-                    ItemsSource="{Binding }">
-                
-                </ListBox >
-            
+                    ItemsSource="{Binding Articles}"
+                    SelectionMode="Single"
+                    CornerRadius="5"
+                    ScrollViewer.VerticalScrollBarVisibility="Auto">
+
+                    <TableView.Columns>
+                        <TableViewColumn Header="Subject"
+                                         Binding="{Binding ArticleSubject}"
+                                         Width="2*" />
+
+                        <TableViewColumn Header="Author"
+                                         Binding="{Binding ArticleAuthor}"
+                                         Width="*"
+                                         HorizontalContentAlignment="Right" />
+
+                        <TableViewColumn Header="Date"
+                                         Binding="{Binding ArticleDate}"
+                                         Width="*"
+                                         HorizontalContentAlignment="Right" />
+                    </TableView.Columns>
+                </TableView>
+
             </Grid>
-        
+
             <Grid
-                Grid.Row = "1"
+                Grid.Row="1"
                 Grid.Column="1"
                 RowDefinitions="Auto, *">
-                
-                <TextBlock 
+
+                <TextBlock
                     Grid.Column="0"
                     Grid.Row="0"
                     Text="Content">
-                
+
                 </TextBlock>
-                
-                <ListBox 
+
+                <ListBox
                     Grid.Column="0"
                     Grid.Row="1"
                     Background="GreenYellow"
                     ItemsSource="{Binding }">
-                
-                </ListBox >
-                
+
+                </ListBox>
+
             </Grid>
-        
+
         </Grid>
     </Grid>
-    
+
 </UserControl>

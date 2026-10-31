@@ -17,8 +17,8 @@ public partial class LoginViewModel : ViewModelBase
     
     private string _username = "MFKrabbe";
     private string _password = "wmggezwgn";
-    private int _port = 119;
-    private string _server = "news.eternal-september.org";
+    private int _port = 80; //119
+    private string _server = "reader80.eternal-september.org"; //news.eternal-september.org
     
 
     public LoginViewModel(NavigationService navigation, INntpClient nntpClient)
@@ -58,12 +58,13 @@ public partial class LoginViewModel : ViewModelBase
             if (!hasConnected)
             {
                 LoginMessage = "Could not connect to server";
+                return;
             }
 
 
-            var result = await _nntpClient.AuthenticateAsync(Username, Password);
+            var hasSucceeded = await _nntpClient.AuthenticateAsync(Username, Password);
 
-            if (result.hasSucceded)
+            if (hasSucceeded)
             {
                 _navigation.NavigateTo<NntpMainViewModel>();
                 Username = "";
@@ -73,22 +74,13 @@ public partial class LoginViewModel : ViewModelBase
             else
             {
                 _nntpClient.Disconnect();
-
-                switch (result.responseCode)
-                {
-                    case "481":
-                        LoginMessage = "Wrong Username or Password";
-                        break;
-                    default:
-                        LoginMessage = "Login failed, Please try again";
-                        break;
-                }
-
+                LoginMessage = "Wrong Username or Password, try again";
             }
         }
         catch (Exception)
         {
             LoginMessage = "Something went wrong, try again";
+            _nntpClient.Disconnect();
         }
         
     }

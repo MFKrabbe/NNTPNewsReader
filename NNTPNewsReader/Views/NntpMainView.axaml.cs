@@ -13,6 +13,7 @@ public partial class NntpMainView : UserControl
         
         //https://docs.avaloniaui.net/docs/events/lifecycle-events
         //Loaded fires only after fetching the server data
+        //Makes it so the Groups inside the given server is loaded before changing screen
         Loaded += async (_, _) =>
         {
             if (DataContext is NntpMainViewModel vm)
