@@ -250,9 +250,51 @@ public class Tests
     
     
     [Test]
-    public async Task ListArticlesAsync_GroupWithNoArticles_ReturnFalse()
+    public async Task ListArticlesAsync_GroupWithNoArticles_ReturnTrueWithEmptyList()
     {
-        //need to find empty group
-    }
+        // Arrange
+        await ConnectToServerWithCredentials();
+        
+        var selection = await _client.SelectNewsGroupAsync("acadia.info");
 
+        Assert.That(selection.hasSucceeded, Is.True);
+        Assert.That(selection.details, Is.Not.Null);
+        
+        // Act
+        var result = await _client.ListArticlesAsync(selection.details!);
+        
+        // Assert
+        Assert.That(result.hasSucceeded, Is.True);
+        Assert.That(result.articleEntries, Is.Empty);
+        
+        
+        //need to find empty group
+        //acadia.info
+    }
+    
+    [Test]
+    public async Task ReadArticleBodyAsync_WithExistingArticle_ReturnTrue()
+    {
+        // Arrange
+        await ConnectToServerWithCredentials();
+
+        var selection = await _client.SelectNewsGroupAsync("free.chicken");
+        Assert.That(selection.hasSucceeded, Is.True);
+        Assert.That(selection.details, Is.Not.Null);
+
+        var articles = await _client.ListArticlesAsync(selection.details!);
+        Assert.That(articles.hasSucceeded, Is.True);
+        Assert.That(articles.articleEntries, Is.Not.Empty);
+
+        int articleNumber = articles.articleEntries[0].ArticleNumber;
+        
+        // Act
+        var result = await _client.ReadArticleBodyAsync(articleNumber);
+        
+        // Assert
+        Assert.That(result.hasSucceeded, Is.True);
+        Assert.That(result.articleText, Is.Not.Null);
+    }
+    
+    
 }

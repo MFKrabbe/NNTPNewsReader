@@ -9,7 +9,7 @@ public interface INntpClient
 {
      Task<bool> ConnectAsync(string host , int port);
      void Disconnect();
-     void ReadMessages();
+     Task<(bool hasSucceeded, string articleText)> ReadArticleBodyAsync(int articleNumber);
      void WriteMessages();
      Task<(bool hasSucceeded, List<ArticleEntry> articleEntries)> ListArticlesAsync(GroupDetails groupDetails);
      Task<bool> AuthenticateAsync(string username, string password);

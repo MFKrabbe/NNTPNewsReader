@@ -44,10 +44,13 @@ public class NntpClient : INntpClient
             _client =  new TcpClient();
             
             await _client.ConnectAsync(host, port);
+            Console.WriteLine($"ATTEMPTING CONNECTION with host: {host} on port: {port}");
         
             _reader = new StreamReader(_client.GetStream());
             
             string? serverGreeting = await _reader.ReadLineAsync();
+            Console.WriteLine($"SERVER CONNECTION response: {serverGreeting}");
+            
 
             
             bool isAccepted = serverGreeting != null && (serverGreeting.StartsWith("200 ") || serverGreeting.StartsWith("201 "));
@@ -79,9 +82,56 @@ public class NntpClient : INntpClient
         _client = null;
     }
 
-    public void ReadMessages()
+    public async Task<(bool hasSucceeded, string articleText)> ReadArticleBodyAsync(int articleNumber)
     {
-        throw new System.NotImplementedException();
+        try
+        {
+            var command = Encoding.UTF8.GetBytes($"body {articleNumber}{CRLF}");
+            Console.WriteLine($"Sending BODY with article number: {articleNumber}");
+            
+            await _client!.GetStream().WriteAsync(command);
+            Console.WriteLine("BODY sent; waiting for response");
+
+            string? serverResponse = await _reader!.ReadLineAsync();
+            Console.WriteLine($"BODY response: {serverResponse}");
+
+            var sBuilder = new StringBuilder();
+            var articleBody = "";
+                
+            if (serverResponse != null && serverResponse.StartsWith("222 "))
+            {
+                while (true)
+                {
+                    string? bodyString = await _reader!.ReadLineAsync();
+                   
+                    if (bodyString == null)
+                    {
+                        Console.WriteLine("groupString is null");
+                        throw new Exception("GroupString is null");
+                    }
+                    
+                    if (bodyString == ".")
+                    {
+                        break;
+                    }
+                    sBuilder.AppendLine(bodyString);
+                }
+                articleBody = sBuilder.ToString();
+                Console.WriteLine($"ArticleBody retrieved: \n{articleBody}");
+                return (true, articleBody);
+            }
+            else
+            {
+                Console.WriteLine("failed to retrieve body");
+                return (false, articleBody);
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            Disconnect();
+            throw;
+        }
     }
 
     public void WriteMessages()
@@ -175,9 +225,13 @@ public class NntpClient : INntpClient
         try
         {
             var command = Encoding.UTF8.GetBytes($"list{CRLF}");
+            Console.WriteLine("Sending LIST");
+            
             await _client!.GetStream().WriteAsync(command); 
+            Console.WriteLine("LIST sent; waiting for response");
         
             string? serverResponse = await _reader!.ReadLineAsync();
+            Console.WriteLine($"LIST response: {serverResponse}");
         
             var newsgroups = new List<NewsGroupEntry>();
 
@@ -243,7 +297,6 @@ public class NntpClient : INntpClient
     
     
     //GroupDetails? because selection can potentially fail with 411 and return no GroupDetails
-    //Group can be removed after List was run
     
     public async Task<(bool hasSucceeded, GroupDetails? details)> SelectNewsGroupAsync(string newsGroupEntryName)
     {
@@ -310,9 +363,13 @@ public class NntpClient : INntpClient
         try
         {
             var command = Encoding.UTF8.GetBytes($"authinfo user {username}{CRLF}");
+            Console.WriteLine($"Sending AUTHINFO USER with name: {username}");
 
             await _client!.GetStream().WriteAsync(command);
+            Console.WriteLine("AUTHINFO USER sent; waiting for response");
+            
             string? serverResponse = await _reader!.ReadLineAsync();
+            Console.WriteLine($"AUTHINFO response: {serverResponse}");
 
             if (serverResponse != null && serverResponse.StartsWith("281"))
             {
