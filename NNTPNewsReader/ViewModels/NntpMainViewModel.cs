@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using System.Net.Mail;
 using CommunityToolkit.Mvvm.Input;
 using NNTPNewsReader.Models;
 using NNTPNewsReader.Services;
@@ -27,6 +28,71 @@ public partial class NntpMainViewModel : ViewModelBase
         get => _errorMessage;
         set => SetProperty(ref _errorMessage, value);
     }
+    
+    
+    private bool _isPosting;
+
+    public bool IsPosting
+    {
+        get => _isPosting;
+        set => SetProperty(ref _isPosting, value);
+    }
+    
+    private string _postAuthor = "";
+
+    public string PostAuthor
+    {
+        get => _postAuthor;
+        set => SetProperty(ref _postAuthor, value);
+    }
+    
+    private string _postEmail = "";
+
+    public string PostEmail
+    {
+        get => _postEmail;
+        set => SetProperty(ref _postEmail, value);
+    }
+    
+    
+    private string _postSubject = "";
+
+    public string PostSubject
+    {
+        get => _postSubject;
+        set => SetProperty(ref _postSubject, value);
+    }
+    
+    
+    private string _postBody = "";
+
+    public string PostBody
+    {
+        get => _postBody;
+        set => SetProperty(ref _postBody, value);
+    }
+    
+    private string _postGroupName = "";
+
+    public string PostGroupName
+    {
+        get => _postGroupName;
+        set => SetProperty(ref _postGroupName, value);
+    }
+    
+    public bool CanPostToSelectedGroup
+    {
+        get
+        {
+            if (SelectedNewsGroupEntry == null)
+            {
+                return false;
+            }
+
+            return SelectedNewsGroupEntry.Status == "y" || SelectedNewsGroupEntry.Status == "m";
+        }
+    }
+    
     
     private string _articleBody = "";
 
@@ -70,6 +136,12 @@ public partial class NntpMainViewModel : ViewModelBase
         set
         {
             bool hasChanged = SetProperty(ref _selectedNewsGroup, value);
+            
+            if (hasChanged)
+            {
+                IsPosting = false;
+                OnPropertyChanged(nameof(CanPostToSelectedGroup));
+            }
             
             if (hasChanged && value != null && LoadArticlesCommand.CanExecute(null))
             {
@@ -250,6 +322,79 @@ public partial class NntpMainViewModel : ViewModelBase
             Disconnect();
         }
     }
+    
+    [RelayCommand]
+    public void MakePost()
+    {
+        if (SelectedNewsGroupEntry == null)
+        {
+            ErrorMessage = "Please select newsgroup";
+            return;
+        }
+       
+        PostGroupName = SelectedNewsGroupEntry.GroupName;
+        ErrorMessage = "";
+        IsPosting = true;
+    }
+    
+    [RelayCommand]
+    public void CancelPost()
+    {
+        IsPosting = false;
+    }
+    
+    [RelayCommand]
+    public async Task SendPostAsync()
+    {
+        if (string.IsNullOrWhiteSpace(PostGroupName) || string.IsNullOrWhiteSpace(PostEmail) ||
+            string.IsNullOrWhiteSpace(PostSubject) || string.IsNullOrWhiteSpace(PostBody))
+        {
+            ErrorMessage = "Please fill in Email, Subject, and Body.";
+            return;
+        }
+        ErrorMessage = "";
+
+        MailAddress? email;
+        bool isValidEmailFormat = MailAddress.TryCreate(PostEmail, out email); // checks that the mail is formated correctly
+        
+        if (!isValidEmailFormat)
+        {
+            ErrorMessage = "Enter a valid email address.";
+            return;
+        }
+        
+        var post = new ArticlePost
+        {
+            PostGroupName = PostGroupName,
+            PostAuthor = $"{PostAuthor} <{PostEmail}>",
+            PostSubject = PostSubject,
+            PostBody = PostBody
+        };
+        
+        try
+        {
+            bool hasSucceeded = await _nntpClient.PostArticleAsync(post);
+
+            if (!hasSucceeded)
+            {
+                ErrorMessage = "The server did not accept the post or posting is not allowed.";
+                return;
+            }
+
+            ErrorMessage = "Post sent successfully.";
+            PostSubject = "";
+            PostBody = "";
+            IsPosting = false;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            ErrorMessage = "Could not confirm the post was sent. It may have been received.";
+        }
+        
+        
+    }
+    
     
 
     [RelayCommand]

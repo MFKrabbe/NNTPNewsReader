@@ -114,6 +114,12 @@ public class NntpClient : INntpClient
                     {
                         break;
                     }
+                    
+                    if (bodyString.StartsWith(".."))
+                    {
+                        bodyString = bodyString.Substring(1); //removes the extra dot
+                    }
+                    
                     sBuilder.AppendLine(bodyString);
                 }
                 articleBody = sBuilder.ToString();
@@ -134,10 +140,86 @@ public class NntpClient : INntpClient
         }
     }
 
-    public void WriteMessages()
+    public async Task<bool> PostArticleAsync(ArticlePost post)
     {
-        throw new System.NotImplementedException();
+        try
+        {
+            var nntpFormat = ToNntpPostFormat(post);
+            
+            var command = Encoding.UTF8.GetBytes($"post{CRLF}");
+            Console.WriteLine("Sending POST:");   
+            
+            await _client!.GetStream().WriteAsync(command);
+            Console.WriteLine("POST sent; waiting for response");
+            
+            string? serverResponse = await _reader!.ReadLineAsync();
+            Console.WriteLine($"POST response: {serverResponse}");
+            
+            if(serverResponse == null || !serverResponse.StartsWith("340 "))
+            {
+                return false;
+            }
+            
+            command = Encoding.UTF8.GetBytes(nntpFormat);
+            Console.WriteLine($"Sending Formatted POST: {nntpFormat}");
+            
+            await _client!.GetStream().WriteAsync(command);
+            Console.WriteLine("POST sent; waiting for response");
+            
+            serverResponse = await _reader!.ReadLineAsync();
+            
+            return serverResponse != null && serverResponse!.StartsWith("240 ");
+        }
+        catch (Exception e)
+        {
+            Disconnect();
+            Console.WriteLine(e);
+            throw;
+        }
     }
+    
+
+    public string ToNntpPostFormat(ArticlePost post)
+    {
+        var sBuilder = new StringBuilder();
+
+        sBuilder.Append($"From: {post.PostAuthor}{CRLF}");
+        sBuilder.Append($"Newsgroups: {post.PostGroupName}{CRLF}");
+        sBuilder.Append($"Subject: {post.PostSubject}{CRLF}");
+        sBuilder.Append(CRLF); //space between the Headesr and body
+
+        using var reader = new StringReader(post.PostBody);
+        
+        string? line = reader.ReadLine();
+
+        while (line != null)
+        {
+            if (line.StartsWith("."))
+            {
+                sBuilder.Append(".");  //adding extra a dot
+            }
+            sBuilder.Append(line);
+            sBuilder.Append(CRLF);
+            
+            line = reader.ReadLine();
+        }
+        
+        sBuilder.Append(".");
+        sBuilder.Append(CRLF);
+        
+        return sBuilder.ToString();
+        
+        
+        /*
+         * Thus a single dot (".")
+         * on a line indicates the end of the text, and lines starting with a
+         * dot in the original text have that dot doubled during transmission.
+         */
+    }
+    
+    
+    
+    
 
     //https://www.rfc-editor.org/info/rfc3977/#section-8.3 
     public async Task<(bool hasSucceeded, List<ArticleEntry> articleEntries)> ListArticlesAsync(GroupDetails groupDetails)
@@ -371,13 +453,13 @@ public class NntpClient : INntpClient
             string? serverResponse = await _reader!.ReadLineAsync();
             Console.WriteLine($"AUTHINFO response: {serverResponse}");
 
-            if (serverResponse != null && serverResponse.StartsWith("281"))
+            if (serverResponse != null && serverResponse.StartsWith("281 "))
             {
                 //if a server only requires username
                 return true;
             }
 
-            if (serverResponse == null || !serverResponse.StartsWith("381"))
+            if (serverResponse == null || !serverResponse.StartsWith("381 "))
             {
                 //catches everything this not the 381 request password code (481, 482 or 500 what?) or no response
                 return false;
@@ -388,7 +470,7 @@ public class NntpClient : INntpClient
             await _client!.GetStream().WriteAsync(command);
             serverResponse = await _reader!.ReadLineAsync();
             
-            return serverResponse != null && serverResponse.StartsWith("281");
+            return serverResponse != null && serverResponse.StartsWith("281 ");
         }
         catch(Exception e)
         {

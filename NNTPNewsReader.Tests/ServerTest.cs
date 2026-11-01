@@ -1,4 +1,5 @@
-﻿using NNTPNewsReader.Services;
+﻿using NNTPNewsReader.Models;
+using NNTPNewsReader.Services;
 
 namespace NNTPNewsReader.Tests;
 
@@ -266,10 +267,6 @@ public class Tests
         // Assert
         Assert.That(result.hasSucceeded, Is.True);
         Assert.That(result.articleEntries, Is.Empty);
-        
-        
-        //need to find empty group
-        //acadia.info
     }
     
     [Test]
@@ -296,5 +293,50 @@ public class Tests
         Assert.That(result.articleText, Is.Not.Null);
     }
     
+    [Test]
+    public void ToNntpPostFormat_WithSampleNoServer_ReturnTrue()
+    {
+        // Arrange
+        var post = new ArticlePost
+        {
+            PostGroupName = "example.test",
+            PostAuthor = "Demo User <nobody@example.com>",
+            PostSubject = "Test subject",
+            PostBody = "Test body"
+        };
+        var CLRF = "\r\n";
+
+        // Act
+        string text = _client.ToNntpPostFormat(post);
+        
+        // Assert
+        Assert.That(text, Does.Contain($"From: Demo User <nobody@example.com>{CLRF}"));
+        Assert.That(text, Does.Contain($"Newsgroups: example.test{CLRF}"));
+        Assert.That(text, Does.Contain($"Subject: Test subject{CLRF}"));
+        Assert.That(text, Does.Contain($"{CLRF}Test body{CLRF}.{CLRF}"));
+    }
+    
+    [Test]
+    public void ToNntpPostFormat_WithWithDotNoServer_ReturnTrue()
+    {
+        // Arrange
+        var post = new ArticlePost
+        {
+            PostGroupName = "example.test",
+            PostAuthor = "Demo User <nobody@example.com>",
+            PostSubject = "Test subject",
+            PostBody = "."
+        };
+        var CLRF = "\r\n";
+
+        // Act
+        string text = _client.ToNntpPostFormat(post);
+        
+        // Assert
+        Assert.That(text, Does.Contain($"From: Demo User <nobody@example.com>{CLRF}"));
+        Assert.That(text, Does.Contain($"Newsgroups: example.test{CLRF}"));
+        Assert.That(text, Does.Contain($"Subject: Test subject{CLRF}"));
+        Assert.That(text, Does.Contain($"{CLRF}..{CLRF}.{CLRF}"));
+    }
     
 }

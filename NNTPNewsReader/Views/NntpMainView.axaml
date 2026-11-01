@@ -11,10 +11,13 @@
              x:DataType="vm:NntpMainViewModel"
              Background="DarkMagenta">
 
-
+    <!-- the {Binding !SendPostCommand.IsRunning} is added so that user does not do anything while the post is send
+    as the post runs on the same tcpClient connection as all other calls -->
     <Grid
         RowDefinitions="30,*"
-        Margin="10">
+        Margin="10"
+        IsEnabled="{Binding !SendPostCommand.IsRunning}"
+        >
 
         <Border
             Grid.Row="0"
@@ -23,21 +26,25 @@
             
             <Grid
             
-                ColumnDefinitions="0.5*,*">
-
-                <Button
-                    Grid.Column="0"
-                    Content="Disconnect"
-                    Command="{Binding DisconnectCommand}">
-                </Button>
+                ColumnDefinitions="*,Auto">
+                
 
                 <Label
-                    Grid.Column="1"
+                    Grid.Column="0"
                     Content="{Binding ErrorMessage}"
                     FontWeight="Bold"
                     FontSize="20"
                     Foreground="Red">
                 </Label>
+                
+                <Button
+                    Grid.Column="1"
+                    Content="Disconnect"
+                    FontSize="10"
+                    FontWeight="Bold"
+                    Command="{Binding DisconnectCommand}"
+                    HorizontalAlignment="Right">
+                </Button>
 
 
             </Grid>
@@ -171,19 +178,35 @@
                 Grid.Column="1"
                 Background="DarkSlateGray"
                 CornerRadius="10"
-                Padding="10">
+                Padding="10"
+                IsVisible="{Binding !IsPosting}">
                 
                 <Grid
-                    RowDefinitions="Auto, *">
+                    RowDefinitions="Auto, *"
+                    RowSpacing="8">
 
-                    <Label
+                    <Grid
+                        Grid.Row = "0"
                         Grid.Column="0"
-                        Grid.Row="0"
-                        Content="Content"
-                        FontWeight="Bold">
+                        
+                        ColumnDefinitions="*, Auto">
+                        
+                        <Label
+                            Grid.Column="0"
+                            Content="Content"
+                            FontWeight="Bold">
 
-                    </Label>
-
+                        </Label>
+                        
+                        <Button
+                            Grid.Column="1"
+                            Content="Make Post"
+                            Command="{Binding MakePostCommand}"
+                            IsEnabled="{Binding CanPostToSelectedGroup}">
+                        </Button>
+                        
+                    </Grid>
+                    
                     <Border
                         Grid.Column="0"
                         Grid.Row="1"
@@ -197,10 +220,85 @@
                         </TextBlock>
                         
                     </Border>
-                    
-
                 </Grid>
-                
+            </Border>
+            
+            <Border 
+                Grid.Row="1"
+                Grid.Column="1"
+                Padding="10"
+                Background="DarkOliveGreen"
+                CornerRadius="10"
+                IsVisible="{Binding IsPosting}">
+
+                <Grid 
+                    RowDefinitions="Auto,*" 
+                    RowSpacing="8">
+
+                    <Grid 
+                        Grid.Row="0" 
+                        ColumnDefinitions="*,*,Auto,Auto">
+                        
+                        <Label 
+                            Content="New post at: " 
+                            FontWeight="Bold">
+                            
+                        </Label>
+                        
+                        <Label
+                            Grid.Column="1"
+                            FontWeight="Bold"
+                            Content="{Binding PostGroupName}">
+                            
+                        </Label>
+
+                        <Button 
+                            Grid.Column="2"
+                            Content="Send"
+                            Command="{Binding SendPostCommand}">
+                            
+                        </Button>
+                        
+                        <Button 
+                            Grid.Column="3"
+                            Content="Cancel"
+                            Command="{Binding CancelPostCommand}">
+                            
+                        </Button>
+                        
+                    </Grid>
+
+                    <Grid 
+                        Grid.Row="1"
+                        RowDefinitions="Auto,*"
+                        ColumnDefinitions="*,*,*"
+                        RowSpacing="8"
+                        ColumnSpacing="8">
+
+                        <TextBox Grid.Row="0" Grid.Column="0"
+                                 PlaceholderText="Name"
+                                 Text="{Binding PostAuthor, Mode=TwoWay}" />
+
+                        <TextBox Grid.Row="0" Grid.Column="1"
+                                 PlaceholderText="Email"
+                                 Text="{Binding PostEmail, Mode=TwoWay}" />
+
+                        <TextBox Grid.Row="0" Grid.Column="2"
+                                 PlaceholderText="Subject"
+                                 Text="{Binding PostSubject, Mode=TwoWay}" />
+
+                        <TextBox 
+                            Grid.Row="1"
+                            Grid.Column="0"
+                            Grid.ColumnSpan="3"
+                            PlaceholderText="Your message"
+                            Text="{Binding PostBody, Mode=TwoWay}"
+                            AcceptsReturn="True"
+                            TextWrapping="Wrap"
+                            ScrollViewer.VerticalScrollBarVisibility="Auto" />
+
+                    </Grid>
+                </Grid>
             </Border>
            
 
