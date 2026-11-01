@@ -15,8 +15,8 @@ public partial class LoginViewModel : ViewModelBase
 
     //husk at ændre password
     
-    private string _username = "MFKrabbe";
-    private string _password = "wmggezwgn";
+    private string _username = "";
+    private string _password = "";
     private int _port = 80; //119
     private string _server = "reader80.eternal-september.org"; //news.eternal-september.org
     
