@@ -10,51 +10,133 @@
              x:DataType="vm:LoginViewModel"
              Background="BlueViolet">
     
+    
+    
     <Grid
         ColumnDefinitions="Auto"
-        RowDefinitions="Auto, Auto, Auto, Auto, Auto"
-        ColumnSpacing="20"
-        RowSpacing="20"
-        HorizontalAlignment="Center">
+        RowDefinitions="*, Auto"
+        HorizontalAlignment="Center"
+        VerticalAlignment="Center">
+        
+        
+        <!--Server Login-->
+        <Border
+            Grid.Row = "0"
+            IsVisible="{Binding !IsConnected}"
+            Background="Blue"
+            Padding="10"
+            CornerRadius="10"
+            Width="400">
+            
+            <Grid
+                ColumnDefinitions="*"
+                RowDefinitions="Auto, Auto, Auto, Auto"
+                ColumnSpacing="20"
+                RowSpacing="20">
+            
+                <Label
+                    Grid.Row="0"
+                    Content="Connect to nntp-server"
+                    FontSize="15"
+                    FontWeight="DemiBold">
+                
+                </Label>
+        
+                <TextBox
+                    Grid.Row="1"
+                    PlaceholderText="Enter Server Name"
+                    HorizontalAlignment="Stretch"
+                    Text="{Binding Server}">
+            
+                </TextBox>
+        
+                <NumericUpDown
+                    Grid.Row="2"
+                    PlaceholderText="Enter Port"
+                    Value="{Binding Port, Mode=TwoWay}"
+                    Minimum="1"
+                    Maximum="65536"
+                    FormatString="0"
+                    HorizontalAlignment="Stretch"
+                    ShowButtonSpinner="False">
+            
+                </NumericUpDown>
+        
+                <Button
+                    Grid.Row="3"
+                    Content="Connect"
+                    Background="Green"
+                    Foreground="Beige"
+                    Command="{Binding CheckServerCredentialsCommand}">
+                </Button>
+            
+            </Grid>
+        </Border>
+       
+        <Border
+            Grid.Row = "0"
+            IsVisible="{Binding IsConnected}"
+            Background="DarkCyan"
+            Padding="10"
+            CornerRadius="10"
+            Width="400">
+            
+            <Grid
+                ColumnDefinitions="*"
+                RowDefinitions="Auto, Auto, Auto, Auto"
+                ColumnSpacing="20"
+                RowSpacing="20">
+            
+                <Label
+                    Grid.Row="0"
+                    Content="Login"
+                    FontSize="15"
+                    FontWeight="DemiBold">
+                
+                </Label>
+        
+                <TextBox
+                    Grid.Row="1"
+                    PlaceholderText="Enter Username"
+                    HorizontalAlignment="Stretch"
+                    Text="{Binding Username}">
+            
+                </TextBox>
+        
+                <TextBox
+                    Grid.Row="2"
+                    PlaceholderText="Enter Password"
+                    PasswordChar="*"
+                    HorizontalAlignment="Stretch"
+                    Text="{Binding Password}">
+            
+                </TextBox>
+        
+                <Button
+                    Grid.Row="3"
+                    Content="Login"
+                    Background="Green"
+                    Foreground="Beige"  
+                    Command="{Binding CheckLoginCommand}">
+                </Button>
+            
+            </Grid>
+        </Border>
+        
+        
+        
         
         <Label
-            Grid.Row="0"
-            Content="Login Page"
-            FontSize="40"
-            HorizontalContentAlignment="Center">
-            
-        </Label>
-        
-        <TextBox
+            Grid.Column="0"
             Grid.Row="1"
-            PlaceholderText="Enter UserName"
-            Text="{Binding Username}">
-            
-        </TextBox>
-        
-        <TextBox
-            Grid.Row="2"
-            PlaceholderText="Enter Password"
-            PasswordChar="*"
-            Text="{Binding Password}">
-            
-        </TextBox>
-        
-        <Button
-            Grid.Row="3"
-            Content="Login"
-            Background="Green"
-            Foreground="Beige"  
-            Command="{Binding CheckLoginAsync}">
-            
-        </Button>
-        
-        <Label
-            Grid.Row="4"
-            Content="{Binding LoginMessage}">
+            Foreground="Red"
+            Content="{Binding LoginMessage}"
+            CornerRadius="10">
             
         </Label>
         
     </Grid>
+    
+    
     
 </UserControl>

@@ -23,7 +23,7 @@ namespace NNTPNewsReader.Services;
 
 
 //https://www.w3.org/Protocols/rfc977/rfc977 for return codes
-//https://www.rfc-editor.org/info/rfc6048/#section-3.1 newer codes --> check Posting status
+//https://www.rfc-editor.org/info/rfc6048 newer codes --> check Posting status
 
 
 public class NntpClient : INntpClient

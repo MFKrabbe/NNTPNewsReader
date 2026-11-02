@@ -406,5 +406,11 @@ public partial class NntpMainViewModel : ViewModelBase
         NewsGroups.Clear();
         _allNewsGroups.Clear();
         _navigation.NavigateTo<LoginViewModel>();
+        if (_navigation.CurrentViewModel is LoginViewModel login)
+        {
+            login.IsConnected = false;
+            login.Password = "";
+            login.LoginMessage = "";
+        }
     }
 }
