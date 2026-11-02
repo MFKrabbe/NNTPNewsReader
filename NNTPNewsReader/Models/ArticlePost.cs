@@ -2,6 +2,7 @@
 
 public class ArticlePost
 {
+    //For the Post command on the server
     public string PostGroupName { get; init; } = "";
     public string PostAuthor { get; init; } = "";
     public string PostSubject { get; init; } = "";
