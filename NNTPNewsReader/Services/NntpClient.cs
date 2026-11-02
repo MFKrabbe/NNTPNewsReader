@@ -36,9 +36,6 @@ public class NntpClient : INntpClient
     //Sets up TcpClient and StreamReader and connects to the given host and port
     public async Task<bool> ConnectAsync(string host, int port)
     {
-        //const string host = "news.eternal-september.org";
-        //const int port = 119;
-        
         try
         {
             _client =  new TcpClient();
@@ -221,7 +218,7 @@ public class NntpClient : INntpClient
     
     
 
-    //https://www.rfc-editor.org/info/rfc3977/#section-8.3 
+    //https://www.rfc-editor.org/info/rfc3977
     public async Task<(bool hasSucceeded, List<ArticleEntry> articleEntries)> ListArticlesAsync(GroupDetails groupDetails)
     {
         try

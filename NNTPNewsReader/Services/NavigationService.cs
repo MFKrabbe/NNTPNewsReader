@@ -25,8 +25,7 @@ public class NavigationService : ObservableObject
     public void NavigateTo<T>()  //Er sat op til at bruge vores ServiceCollectionExtension klasse i stedet
         where T : ViewModelBase
     {
-        CurrentViewModel =
-            _services.GetRequiredService<T>();
+        CurrentViewModel = _services.GetRequiredService<T>();
     }
   
 }
